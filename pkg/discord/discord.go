@@ -42,6 +42,7 @@ func Initialize() {
 	conn.SetCloseHandler(func(code int, text string) error {
 		return nil
 	})
+	defer conn.Close()
 
 	msgtype, msg, err := conn.ReadMessage()
 	if err != nil {
@@ -49,9 +50,49 @@ func Initialize() {
 	}
 	var newEvent event
 	json.Unmarshal(msg, &newEvent)
+
+	err = conn.WriteMessage(1, []byte(`{
+		"op": 1,
+		"d": null
+	}`))
+	if err != nil {
+		panic(err)
+	}
+
+	msgtype, msg, err = conn.ReadMessage()
+	if err != nil {
+		panic(err)
+	}
+	json.Unmarshal(msg, &newEvent)
 	fmt.Printf("\n%+v\n", newEvent)
 
 	fmt.Printf("\n%d - %s\n", msgtype, string(msg))
+
+	err = conn.WriteMessage(1, []byte(fmt.Sprintf(`{
+		"op": 2,
+		"d": {
+			"token": "%s",
+			"properties": {
+				"$os": "linux",
+				"$browser": "disco",
+				"$device": "disco"
+			}
+		}
+	}`, os.Getenv("BOT_AUTH"))))
+
+	if err != nil {
+		panic(err)
+	}
+
+	msgtype, msg, err = conn.ReadMessage()
+	if err != nil {
+		panic(err)
+	}
+	json.Unmarshal(msg, &newEvent)
+	fmt.Printf("\n%+v\n", newEvent)
+
+	fmt.Printf("\n%d - %s\n", msgtype, string(msg))
+
 }
 
 func gateway() (string, error) {
