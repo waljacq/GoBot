@@ -1,7 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"go-bot/pkg/discord"
+	"os"
+	"os/signal"
+)
 
 func main() {
-	fmt.Printf("hello, world\n")
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+
+	discord.Initialize()
 }
