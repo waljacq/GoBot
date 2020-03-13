@@ -28,7 +28,6 @@ func Initialize() {
 		os.Exit(1)
 	}
 
-	//token := os.Getenv("BOT_AUTH")
 	header := http.Header{}
 	url, err := gateway()
 	if err != nil {
@@ -51,6 +50,12 @@ func Initialize() {
 	var newEvent event
 	json.Unmarshal(msg, &newEvent)
 
+	fmt.Printf("\n%d - %s\n", msgtype, string(msg))
+
+	// Start go routine to send heartbeat message every X ms
+	// may need to set up an additional helper function for all message sends to go through for mutex locking
+
+	// Heartbeat
 	err = conn.WriteMessage(1, []byte(`{
 		"op": 1,
 		"d": null
