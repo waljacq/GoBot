@@ -6,20 +6,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
-
-type event struct {
-	T  string          `json:"t"`
-	S  int             `json:"s"`
-	OP int             `json:"op"`
-	D  json.RawMessage `json:"d"`
-}
-
-type discordURL struct {
-	URL string `json:"url"`
-}
 
 // Initialize ...
 func Initialize() {
@@ -34,6 +24,9 @@ func Initialize() {
 		panic(err)
 	}
 	conn, _, err := websocket.DefaultDialer.Dial(url, header)
+	waitGroup := sync.WaitGroup{}
+	connLock := sync.Mutex{}
+	c := Client{conn, &waitGroup, &connLock, true}
 	if err != nil {
 		panic(err)
 	}
@@ -43,37 +36,13 @@ func Initialize() {
 	})
 	defer conn.Close()
 
-	msgtype, msg, err := conn.ReadMessage()
-	if err != nil {
-		panic(err)
-	}
-	var newEvent event
-	json.Unmarshal(msg, &newEvent)
-
-	fmt.Printf("\n%d - %s\n", msgtype, string(msg))
-
-	// Start go routine to send heartbeat message every X ms
-	// may need to set up an additional helper function for all message sends to go through for mutex locking
-
-	// Heartbeat
-	err = conn.WriteMessage(1, []byte(`{
-		"op": 1,
-		"d": null
-	}`))
+	newEvent := c.ReadEvent()
+	interval, err := ExtractInterval(newEvent.D)
 	if err != nil {
 		panic(err)
 	}
 
-	msgtype, msg, err = conn.ReadMessage()
-	if err != nil {
-		panic(err)
-	}
-	json.Unmarshal(msg, &newEvent)
-	fmt.Printf("\n%+v\n", newEvent)
-
-	fmt.Printf("\n%d - %s\n", msgtype, string(msg))
-
-	err = conn.WriteMessage(1, []byte(fmt.Sprintf(`{
+	identifyMsg := []byte(fmt.Sprintf(`{
 		"op": 2,
 		"d": {
 			"token": "%s",
@@ -83,21 +52,17 @@ func Initialize() {
 				"$device": "disco"
 			}
 		}
-	}`, os.Getenv("BOT_AUTH"))))
+	}`, os.Getenv("BOT_AUTH")))
 
-	if err != nil {
-		panic(err)
-	}
+	c.SendEvent(identifyMsg)
 
-	msgtype, msg, err = conn.ReadMessage()
-	if err != nil {
-		panic(err)
-	}
-	json.Unmarshal(msg, &newEvent)
-	fmt.Printf("\n%+v\n", newEvent)
+	c.waitGroup.Add(2)
+	// Start go routine to send heartbeat message every X ms
+	// may need to set up an additional helper function for all message sends to go through for mutex locking
+	go c.heartbeat(interval)
+	go c.listening()
 
-	fmt.Printf("\n%d - %s\n", msgtype, string(msg))
-
+	c.waitGroup.Wait()
 }
 
 func gateway() (string, error) {
@@ -107,7 +72,7 @@ func gateway() (string, error) {
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	url := discordURL{}
+	url := URL{}
 	err = json.Unmarshal(body, &url)
 	if err != nil {
 		return "", err
@@ -116,3 +81,34 @@ func gateway() (string, error) {
 }
 
 // https://discordapp.com/api/v6/gateway?v=6&encoding=json
+
+// ReadEvent ...
+func (c *Client) ReadEvent() Event {
+	_, msg, err := c.conn.ReadMessage()
+	if err != nil {
+		panic(err)
+	}
+	var newEvent Event
+	json.Unmarshal(msg, &newEvent)
+	return newEvent
+}
+
+// SendEvent ...
+func (c *Client) SendEvent(msg []byte) {
+	c.connLock.Lock()
+	err := c.conn.WriteMessage(1, msg)
+	c.connLock.Unlock()
+	if err != nil {
+		panic(err)
+	}
+}
+
+// PrintEvent ...
+func PrintEvent(eve Event) {
+	fmt.Printf(`
+	OP: %d
+	T: %s
+	S: %d
+	D: %s
+	`, eve.OP, eve.T, eve.S, eve.D)
+}
