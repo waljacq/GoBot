@@ -26,7 +26,7 @@ func Initialize() {
 	conn, _, err := websocket.DefaultDialer.Dial(url, header)
 	waitGroup := sync.WaitGroup{}
 	connLock := sync.Mutex{}
-	c := Client{conn, &waitGroup, &connLock, true}
+	c := Client{conn, &waitGroup, &connLock, true, 0}
 	if err != nil {
 		panic(err)
 	}
@@ -81,34 +81,3 @@ func gateway() (string, error) {
 }
 
 // https://discordapp.com/api/v6/gateway?v=6&encoding=json
-
-// ReadEvent ...
-func (c *Client) ReadEvent() Event {
-	_, msg, err := c.conn.ReadMessage()
-	if err != nil {
-		panic(err)
-	}
-	var newEvent Event
-	json.Unmarshal(msg, &newEvent)
-	return newEvent
-}
-
-// SendEvent ...
-func (c *Client) SendEvent(msg []byte) {
-	c.connLock.Lock()
-	err := c.conn.WriteMessage(1, msg)
-	c.connLock.Unlock()
-	if err != nil {
-		panic(err)
-	}
-}
-
-// PrintEvent ...
-func PrintEvent(eve Event) {
-	fmt.Printf(`
-	OP: %d
-	T: %s
-	S: %d
-	D: %s
-	`, eve.OP, eve.T, eve.S, eve.D)
-}
