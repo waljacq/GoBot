@@ -6,15 +6,14 @@ import (
 	"time"
 )
 
-
 // Heartbeat ...
 func (c *Client) heartbeat(interval int) {
 	defer c.waitGroup.Done()
-	var heartbeatBody = fmt.Sprintf(`{
+	heartbeatBody := []byte(fmt.Sprintf(`{
 		"op": 1,
 		"d": %d
 	}`, c.seq))
-	
+
 	for {
 		if c.heartbeatAck == true {
 			c.heartbeatAck = false
