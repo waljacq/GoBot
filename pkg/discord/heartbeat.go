@@ -2,17 +2,18 @@ package discord
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
-
-var heartbeatBody = []byte(`{
-	"op": 1,
-	"d": null
-}`)
 
 // Heartbeat ...
 func (c *Client) heartbeat(interval int) {
 	defer c.waitGroup.Done()
+	heartbeatBody := []byte(fmt.Sprintf(`{
+		"op": 1,
+		"d": %d
+	}`, c.seq))
+
 	for {
 		if c.heartbeatAck == true {
 			c.heartbeatAck = false

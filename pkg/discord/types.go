@@ -31,4 +31,5 @@ type Client struct {
 	waitGroup    *sync.WaitGroup
 	connLock     *sync.Mutex
 	heartbeatAck bool
+	seq          int
 }
