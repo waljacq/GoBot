@@ -1,4 +1,4 @@
-package discord
+package parser
 
 import (
 	"encoding/json"
@@ -6,7 +6,8 @@ import (
 	"go-bot/pkg/commands"
 )
 
-func parseDispatch(body json.RawMessage, tag string) {
+// Dispatch ...
+func Dispatch(body json.RawMessage, tag string) {
 	if tag == "MESSAGE_CREATE" {
 		var msg commands.Message
 		json.Unmarshal([]byte(body), &msg)

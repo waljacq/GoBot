@@ -3,6 +3,8 @@ package discord
 import (
 	"encoding/json"
 	"fmt"
+
+	p "go-bot/pkg/parser"
 )
 
 // ReadEvent ...
@@ -46,7 +48,7 @@ func (c *Client) handleEvent(eve Event) {
 	switch eve.OP {
 	case 0:
 		fmt.Println("\n\nOP code 0 received")
-		parseDispatch(eve.D, eve.T)
+		p.Dispatch(eve.D, eve.T)
 	case 1:
 		fmt.Println("\n\nOP code 1 received")
 	case 2:
