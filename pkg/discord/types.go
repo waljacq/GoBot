@@ -3,6 +3,7 @@ package discord
 import (
 	"encoding/json"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -30,6 +31,7 @@ type Client struct {
 	conn         *websocket.Conn
 	waitGroup    *sync.WaitGroup
 	connLock     *sync.Mutex
+	startTime    time.Time
 	heartbeatAck bool
 	seq          int
 }
