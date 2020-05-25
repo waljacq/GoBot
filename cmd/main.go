@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"go-bot/pkg/discord"
+	"go-bot/pkg/metadata"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -17,4 +19,8 @@ func main() {
 		os.Exit(0)
 	}()
 	discord.Initialize()
+}
+
+func init() {
+	metadata.StartTime = time.Now()
 }
