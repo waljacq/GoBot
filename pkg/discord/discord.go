@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -27,7 +26,7 @@ func Initialize() {
 	conn, _, err := websocket.DefaultDialer.Dial(url, header)
 	waitGroup := sync.WaitGroup{}
 	connLock := sync.Mutex{}
-	c := Client{conn, &waitGroup, &connLock, time.Now(), true, 0}
+	c := Client{conn, &waitGroup, &connLock, true, 0}
 	if err != nil {
 		panic(err)
 	}
