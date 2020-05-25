@@ -1,2 +1,7 @@
-# GoBot
-test
+# go-bot
+
+## Running
+
+## Credits
+
+
